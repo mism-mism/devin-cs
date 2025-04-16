@@ -1,0 +1,54 @@
+service: devin-cs
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'ap-northeast-1'}
+  environment:
+    NODE_ENV: ${opt:stage, 'dev'}
+    LINE_CHANNEL_ACCESS_TOKEN: ${env:LINE_CHANNEL_ACCESS_TOKEN}
+    LINE_CHANNEL_SECRET: ${env:LINE_CHANNEL_SECRET}
+    SLACK_WEBHOOK_URL: ${env:SLACK_WEBHOOK_URL}
+    SLACK_BOT_TOKEN: ${env:SLACK_BOT_TOKEN}
+    SLACK_SIGNING_SECRET: ${env:SLACK_SIGNING_SECRET}
+    SLACK_APP_TOKEN: ${env:SLACK_APP_TOKEN}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, 'gpt-3.5-turbo'}
+    OPENAI_MAX_TOKENS: ${env:OPENAI_MAX_TOKENS, '500'}
+    OPENAI_TEMPERATURE: ${env:OPENAI_TEMPERATURE, '0.7'}
+    MOCK_SERVER_URL: ${env:MOCK_SERVER_URL, 'https://${self:custom.apiGatewayUrl}/mock-mcp'}
+
+custom:
+  apiGatewayUrl: !GetAtt ApiGatewayRestApi.RestApiId.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}
+
+functions:
+  app:
+    handler: dist/lambda.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+package:
+  exclude:
+    - node_modules/**
+    - src/**
+    - .env
+    - .env.example
+    - .git/**
+    - .gitignore
+    - README.md
+    - tsconfig.json
+  include:
+    - dist/**
+    - package.json
