@@ -33,9 +33,12 @@ export async function sendSlackNotification(data: SlackNotificationData): Promis
 
     // Format recent orders
     const recentOrdersText = orders.length > 0
-      ? orders.slice(0, 3).map(order => {
-          return `• 注文番号: ${order.id} | 日付: ${order.orderDate} | 状態: ${order.status} | 金額: ¥${order.totalAmount.toLocaleString()}`;
-        }).join('\n')
+      ? [...orders]
+          .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()) // Sort by date, newest first
+          .slice(0, 3)
+          .map(order => {
+            return `• 注文番号: ${order.id} | 日付: ${order.orderDate} | 状態: ${order.status} | 金額: ¥${order.totalAmount.toLocaleString()}`;
+          }).join('\n')
       : '最近の注文はありません';
 
     // Create Slack message
