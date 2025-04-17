@@ -32,7 +32,7 @@ export async function handleLineEvent(event: WebhookEvent): Promise<void> {
   try {
     // Handle message events
     if (event.type === 'message' && event.message.type === 'text') {
-      await handleTextMessage(event);
+      await handleTextMessage(event as MessageEvent & { message: TextMessage });
     }
   } catch (error) {
     console.error('Error in handleLineEvent:', error);
@@ -48,6 +48,16 @@ async function handleTextMessage(event: MessageEvent & { message: TextMessage })
   const { replyToken, source, message } = event;
   const userId = source.userId;
   const text = message.text;
+
+  // If userId is undefined, we can't proceed
+  if (!userId) {
+    console.error('Error: userId is undefined');
+    await lineClient.replyMessage(replyToken, {
+      type: 'text',
+      text: 'エラーが発生しました。しばらくしてからもう一度お試しください。'
+    });
+    return;
+  }
 
   try {
     // Get customer data from mock MCP server

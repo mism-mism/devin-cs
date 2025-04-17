@@ -44,12 +44,13 @@ function registerSlackEventHandlers(): void {
       await ack();
 
       // Get the payload from the button
-      const payload = JSON.parse(body.actions[0].value);
+      // Type assertion for actions property
+      const payload = JSON.parse((body as any).actions[0].value);
       const { replyToken, userId } = payload;
 
       // Open a modal to collect the reply message
       await client.views.open({
-        trigger_id: body.trigger_id,
+        trigger_id: (body as any).trigger_id,
         view: {
           type: 'modal',
           callback_id: 'reply_modal',
@@ -99,7 +100,11 @@ function registerSlackEventHandlers(): void {
       const replyMessage = view.state.values.reply_block.reply_action.value;
 
       // Send the reply to the LINE user
-      await sendLineReply(replyToken, replyMessage);
+      if (replyMessage) {
+        await sendLineReply(replyToken, replyMessage);
+      } else {
+        console.error('Error: replyMessage is undefined or null');
+      }
 
       console.log('Reply sent to LINE user');
     } catch (error) {
